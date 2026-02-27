@@ -1,0 +1,75 @@
+# =============================================================
+# .github/workflows/deploy.yml
+# GitHub Actions deployment workflow for InvestSim
+# Triggers on every push to main branch.
+# Injects Firebase and FMP credentials from GitHub Secrets,
+# substitutes placeholder tokens in firebase-config.js,
+# and deploys the static site to GitHub Pages.
+# =============================================================
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # Deploy only from main branch
+  workflow_dispatch: # Allow manual trigger from Actions tab
+
+# Required permissions for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Prevent concurrent deployments
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      # ── Step 1: Check out the repository ───────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Step 2: Substitute credential tokens ───────────────
+      # Replaces %%PLACEHOLDER%% tokens in firebase-config.js
+      # with real values from GitHub Secrets.
+      # This keeps credentials out of the repository entirely.
+      - name: Inject Firebase configuration
+        run: |
+          sed -i "s|%%FIREBASE_API_KEY%%|${{ secrets.FIREBASE_API_KEY }}|g" js/firebase-config.js
+          sed -i "s|%%FIREBASE_AUTH_DOMAIN%%|${{ secrets.FIREBASE_AUTH_DOMAIN }}|g" js/firebase-config.js
+          sed -i "s|%%FIREBASE_PROJECT_ID%%|${{ secrets.FIREBASE_PROJECT_ID }}|g" js/firebase-config.js
+          sed -i "s|%%FIREBASE_STORAGE_BUCKET%%|${{ secrets.FIREBASE_STORAGE_BUCKET }}|g" js/firebase-config.js
+          sed -i "s|%%FIREBASE_MESSAGING_SENDER_ID%%|${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}|g" js/firebase-config.js
+          sed -i "s|%%FIREBASE_APP_ID%%|${{ secrets.FIREBASE_APP_ID }}|g" js/firebase-config.js
+
+      # ── Step 3: Inject FMP API key ──────────────────────────
+      # FMP key is visible client-side by design — restrict
+      # it by domain in the FMP dashboard after first deploy.
+      - name: Inject FMP API key
+        run: |
+          find js/ -name "*.js" -exec sed -i "s|%%FMP_API_KEY%%|${{ secrets.FMP_API_KEY }}|g" {} \;
+
+      # ── Step 4: Configure GitHub Pages ─────────────────────
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      # ── Step 5: Upload site as Pages artifact ───────────────
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.' # Deploy entire repository root
+
+      # ── Step 6: Deploy to GitHub Pages ─────────────────────
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

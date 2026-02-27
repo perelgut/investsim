@@ -1,0 +1,82 @@
+---
+title: DFD-03 — Portfolio Transaction Data Flow (Buy and Sell)
+---
+flowchart TD
+    %% ── Student Action ──────────────────────────────────────
+    BUY_REQ(["Student submits\nBuy request"])
+    SELL_REQ(["Student submits\nSell request"])
+
+    %% ── portfolio-service.js ────────────────────────────────
+    subgraph PORT_SVC ["portfolio-service.js"]
+        VAL_BUY{"Available capital\n>= total cost?"}
+        VAL_SELL{"Student owns\nenough units?"}
+        CALC_BUY["Calculate:\ntotalCost = units × pricePerUnit"]
+        CALC_SELL["Calculate:\nproceeds = units × currentPrice"]
+        WRITE_TXN_BUY["Write transaction doc\n(type: buy)"]
+        WRITE_TXN_SELL["Write transaction doc\n(type: sell)"]
+        WRITE_POS_OPEN["Write position doc\n(status: open)"]
+        UPDATE_POS["Update position doc\nunits remaining;\nif units = 0 → status: closed"]
+        DEDUCT["Deduct totalCost\nfrom capitalBalance"]
+        CREDIT["Add proceeds\nto capitalBalance"]
+        ERR_FUNDS["Return error:\nInsufficient funds"]
+        ERR_UNITS["Return error:\nInsufficient units"]
+    end
+
+    %% ── Firestore ───────────────────────────────────────────
+    subgraph FIRESTORE ["Cloud Firestore"]
+        COL_PORT[("portfolios\n{capitalBalance}")]
+        COL_TXN[("transactions\n{buy / sell records}")]
+        COL_POS[("positions\n{open / closed}")]
+    end
+
+    %% ── Confirmation ────────────────────────────────────────
+    CONFIRM_BUY{"Student confirms\nbuy?"}
+    CONFIRM_SELL{"Student confirms\nsell?"}
+    CANCEL(["Transaction\ncancelled"])
+
+    %% ── Success ─────────────────────────────────────────────
+    SUCCESS_BUY(["Dashboard refreshed\nNew position shown"])
+    SUCCESS_SELL(["Dashboard refreshed\nPosition updated / closed"])
+
+    %% ── Buy Flow ────────────────────────────────────────────
+    BUY_REQ --> CALC_BUY
+    CALC_BUY --> CONFIRM_BUY
+    CONFIRM_BUY -->|"Confirmed"| VAL_BUY
+    CONFIRM_BUY -->|"Cancelled"| CANCEL
+    VAL_BUY -->|"Yes"| WRITE_TXN_BUY
+    VAL_BUY -->|"No"| ERR_FUNDS
+    WRITE_TXN_BUY --> COL_TXN
+    WRITE_TXN_BUY --> WRITE_POS_OPEN
+    WRITE_POS_OPEN --> COL_POS
+    WRITE_POS_OPEN --> DEDUCT
+    DEDUCT --> COL_PORT
+    DEDUCT --> SUCCESS_BUY
+
+    %% ── Sell Flow ───────────────────────────────────────────
+    SELL_REQ --> CALC_SELL
+    CALC_SELL --> CONFIRM_SELL
+    CONFIRM_SELL -->|"Confirmed"| VAL_SELL
+    CONFIRM_SELL -->|"Cancelled"| CANCEL
+    VAL_SELL -->|"Yes"| WRITE_TXN_SELL
+    VAL_SELL -->|"No"| ERR_UNITS
+    WRITE_TXN_SELL --> COL_TXN
+    WRITE_TXN_SELL --> UPDATE_POS
+    UPDATE_POS --> COL_POS
+    UPDATE_POS --> CREDIT
+    CREDIT --> COL_PORT
+    CREDIT --> SUCCESS_SELL
+
+    %% ── Styles ──────────────────────────────────────────────
+    classDef decision  fill:#FFF2CC,color:#000,stroke:#F0A500
+    classDef firebase  fill:#F5A623,color:#000,stroke:#c47d00
+    classDef service   fill:#2E75B6,color:#fff,stroke:#2E75B6
+    classDef success   fill:#E2EFDA,color:#000,stroke:#70AD47
+    classDef error     fill:#FCE4D6,color:#000,stroke:#c00
+    classDef trigger   fill:#1F4E79,color:#fff,stroke:#1F4E79
+
+    class VAL_BUY,VAL_SELL,CONFIRM_BUY,CONFIRM_SELL decision
+    class COL_PORT,COL_TXN,COL_POS firebase
+    class CALC_BUY,CALC_SELL,WRITE_TXN_BUY,WRITE_TXN_SELL,WRITE_POS_OPEN,UPDATE_POS,DEDUCT,CREDIT service
+    class SUCCESS_BUY,SUCCESS_SELL success
+    class ERR_FUNDS,ERR_UNITS error
+    class BUY_REQ,SELL_REQ trigger

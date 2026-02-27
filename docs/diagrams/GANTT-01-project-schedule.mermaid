@@ -1,0 +1,91 @@
+---
+title: GANTT-01 — Investment Simulation Web Application — Project Schedule (AI-Assisted)
+---
+gantt
+    dateFormat  YYYY-MM-DD
+    axisFormat  %b %d
+    excludes    weekends
+
+    section Phase 0 · Setup
+    Create GitHub repository               :p01, 2026-03-01, 0.5d
+    Configure VS Code / ESLint / Prettier  :p02, after p01, 0.5d
+    Set up Firebase project                :p03, after p02, 1d
+    Configure Firebase Emulator Suite      :p04, after p03, 1d
+    Create .env.example                    :p05, after p04, 0.5d
+    Create GitHub Actions workflow         :p06, after p05, 1d
+    Run Owner account setup script         :p07, after p06, 0.5d
+    Write project README                   :p08, after p07, 0.5d
+
+    section Phase 1 · Authentication
+    Firebase Auth initialisation           :p11, after p08, 0.5d
+    Student self-registration              :p12, after p11, 1d
+    Login form                             :p13, after p12, 0.5d
+    Logout                                 :p14, after p13, 0.5d
+    Role claim retrieval                   :p15, after p14, 0.5d
+    Portfolio init on register             :p16, after p15, 0.5d
+    Firestore Rules — auth scope           :p17, after p16, 0.5d
+    Unit tests — auth-service.js           :p18, after p17, 0.5d
+
+    section Phase 2 · Routing
+    Hash-based router                      :p21, after p18, 1d
+    Route guards by role                   :p22, after p21, 0.5d
+    Wire all routes to views               :p23, after p22, 0.5d
+    Nav-bar component                      :p24, after p23, 0.5d
+    Unit tests — router.js                 :p25, after p24, 0.5d
+
+    section Phase 3 · Market Data
+    FMP API client                         :p31, after p25, 1d
+    Instrument search                      :p32, after p31, 0.5d
+    Firestore price cache                  :p33, after p32, 0.5d
+    Cache TTL logic                        :p34, after p33, 0.5d
+    Bond fixed-yield calculator            :p35, after p34, 0.5d
+    Firestore Rules — priceCache           :p36, after p35, 0.5d
+    Unit tests — cache-service.js          :p37, after p36, 0.5d
+    Unit tests — market-data-service.js    :p38, after p37, 0.5d
+
+    section Phase 4 · Portfolio Service
+    Execute buy transaction                :p41, after p38, 1.5d
+    Execute sell transaction               :p42, after p41, 1.5d
+    Portfolio read                         :p43, after p42, 0.5d
+    Transaction history read               :p44, after p43, 0.5d
+    Position current value calculation     :p45, after p44, 0.5d
+    Firestore Rules — portfolio scope      :p46, after p45, 0.5d
+    Unit tests — portfolio-service.js      :p47, after p46, 1d
+
+    section Phase 5 · Student Views
+    Student dashboard view                 :p51, after p47, 1.5d
+    Portfolio-table component              :p52, after p51, 1d
+    Position-card component                :p53, after p52, 0.5d
+    Trade screen view                      :p54, after p53, 1.5d
+    Trade-modal component                  :p55, after p54, 1d
+    Data delay notice banner               :p56, after p55, 0.5d
+    All tooltips                           :p57, after p56, 0.5d
+    Formatters utility                     :p58, after p57, 0.5d
+    Validators utility                     :p59, after p58, 0.5d
+
+    section Phase 6 · Admin and Owner Views
+    Admin student list view                :p61, after p59, 1d
+    Admin student detail view              :p62, after p61, 0.5d
+    Admin transaction table                :p63, after p62, 0.5d
+    Owner user management view             :p64, after p63, 1d
+    Role assignment function               :p65, after p64, 0.5d
+
+    section Phase 7 · Testing and Deployment
+    Integration testing — student flows    :p71, after p65, 1.5d
+    Integration testing — admin/owner      :p72, after p71, 1d
+    Cross-browser testing                  :p73, after p72, 1d
+    Responsive layout testing              :p74, after p73, 0.5d
+    Firestore Security Rules validation    :p75, after p74, 0.5d
+    Deploy to GitHub Pages                 :p76, after p75, 0.5d
+    Upgrade FMP key to Premium             :p77, after p76, 0.5d
+    Final README review                    :p78, after p77, 0.5d
+
+    section Milestones
+    Phase 0 Complete — Dev Environment Ready   :milestone, m0, after p08,  0d
+    Phase 1 Complete — Auth Working            :milestone, m1, after p18,  0d
+    Phase 2 Complete — Routing Working         :milestone, m2, after p25,  0d
+    Phase 3 Complete — Market Data Working     :milestone, m3, after p38,  0d
+    Phase 4 Complete — Portfolio Service Ready :milestone, m4, after p47,  0d
+    Phase 5 Complete — Student UI Ready        :milestone, m5, after p59,  0d
+    Phase 6 Complete — Admin/Owner UI Ready    :milestone, m6, after p65,  0d
+    v1.0 Prototype Deployed                    :milestone, m7, after p78,  0d

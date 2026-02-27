@@ -1,0 +1,64 @@
+---
+title: CFD-01 — Application Startup and Client-Side Routing Control Flow
+---
+flowchart TD
+    START(["Browser loads\nindex.html"])
+    INIT["app.js initialises\nFirebase SDK"]
+    AUTH_LISTEN["auth-service.js attaches\nFirebase onAuthStateChanged listener"]
+
+    AUTH_STATE{"Auth state\nreturned?"}
+    NO_USER["User is\nnot authenticated"]
+    YES_USER["User is\nauthenticated"]
+
+    GET_CLAIM["Retrieve role claim\nfrom ID token"]
+    CLAIM{"Role?"}
+
+    ROUTE_LOGIN["router.js → /login\nor /register"]
+    ROUTE_STUDENT["router.js → /dashboard"]
+    ROUTE_ADMIN["router.js → /admin"]
+    ROUTE_OWNER["router.js → /owner"]
+
+    GUARD{"Does requested\nroute match role?"}
+    ALLOW["Load and render\ntarget view"]
+    DENY["Redirect to\nrole default route"]
+
+    HASH_CHANGE["User navigates\n(hash change event)"]
+
+    START --> INIT
+    INIT --> AUTH_LISTEN
+    AUTH_LISTEN --> AUTH_STATE
+    AUTH_STATE -->|"No user"| NO_USER
+    AUTH_STATE -->|"User present"| YES_USER
+
+    NO_USER --> ROUTE_LOGIN
+    ROUTE_LOGIN --> ALLOW
+
+    YES_USER --> GET_CLAIM
+    GET_CLAIM --> CLAIM
+    CLAIM -->|"student"| ROUTE_STUDENT
+    CLAIM -->|"administrator"| ROUTE_ADMIN
+    CLAIM -->|"owner"| ROUTE_OWNER
+
+    ROUTE_STUDENT --> GUARD
+    ROUTE_ADMIN --> GUARD
+    ROUTE_OWNER --> GUARD
+
+    GUARD -->|"Permitted"| ALLOW
+    GUARD -->|"Denied"| DENY
+    DENY --> ALLOW
+
+    ALLOW --> HASH_CHANGE
+    HASH_CHANGE --> GUARD
+
+    %% ── Styles ──────────────────────────────────────────────
+    classDef decision  fill:#FFF2CC,color:#000,stroke:#F0A500
+    classDef route     fill:#2E75B6,color:#fff,stroke:#2E75B6
+    classDef action    fill:#DEEAF1,color:#000,stroke:#2E75B6
+    classDef terminal  fill:#1F4E79,color:#fff,stroke:#1F4E79
+    classDef error     fill:#FCE4D6,color:#000,stroke:#c00
+
+    class AUTH_STATE,CLAIM,GUARD decision
+    class ROUTE_LOGIN,ROUTE_STUDENT,ROUTE_ADMIN,ROUTE_OWNER route
+    class INIT,AUTH_LISTEN,GET_CLAIM,ALLOW,HASH_CHANGE action
+    class START terminal
+    class DENY error

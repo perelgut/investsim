@@ -1,0 +1,63 @@
+---
+title: DFD-02 — Market Data and Price Cache Flow
+---
+flowchart TD
+    %% ── Trigger ─────────────────────────────────────────────
+    TRIGGER(["Price requested\n(dashboard load or trade screen)"])
+
+    %% ── Cache Service ───────────────────────────────────────
+    subgraph CACHE_SVC ["cache-service.js"]
+        CHECK{"Is symbol\nin priceCache?"}
+        FRESH{"Is cache\nentry fresh?\n(within TTL)"}
+        READ_CACHE["Read price\nfrom Firestore\npriceCache"]
+        WRITE_CACHE["Write price +\ntimestamp to\nFirestore priceCache"]
+    end
+
+    %% ── Market Data Service ─────────────────────────────────
+    subgraph MKT_SVC ["market-data-service.js"]
+        BUILD_URL["Build FMP API URL\nwith symbol + API key"]
+        FETCH["HTTP GET to\nFMP /quote/{symbol}"]
+        PARSE["Parse response —\nextract price, currency,\ntimestamp"]
+        ERR{"HTTP\nerror?"}
+        ERR_MSG["Return error state\nto calling view"]
+    end
+
+    %% ── Firebase ────────────────────────────────────────────
+    FIRESTORE[("Firestore\npriceCache collection")]
+    FMP["🌐 FMP API\n(financialmodelingprep.com)"]
+
+    %% ── Output ──────────────────────────────────────────────
+    RETURN(["Return price\nto calling view"])
+
+    %% ── Flow ────────────────────────────────────────────────
+    TRIGGER --> CHECK
+    CHECK -->|"No"| BUILD_URL
+    CHECK -->|"Yes"| FRESH
+    FRESH -->|"Yes — use cache"| READ_CACHE
+    FRESH -->|"No — stale"| BUILD_URL
+    READ_CACHE --> RETURN
+
+    BUILD_URL --> FETCH
+    FETCH --> FMP
+    FMP --> PARSE
+    PARSE --> ERR
+    ERR -->|"No"| WRITE_CACHE
+    ERR -->|"Yes"| ERR_MSG
+    WRITE_CACHE --> FIRESTORE
+    WRITE_CACHE --> RETURN
+
+    %% ── Notes ───────────────────────────────────────────────
+    NOTE1["TTL = 24 hours (Basic tier)\nTTL = 20 minutes (Premium tier)\nDefined in constants.js: CACHE_TTL_MS"]
+
+    %% ── Styles ──────────────────────────────────────────────
+    classDef decision  fill:#FFF2CC,color:#000,stroke:#F0A500
+    classDef firebase  fill:#F5A623,color:#000,stroke:#c47d00
+    classDef external  fill:#1F4E79,color:#fff,stroke:#1F4E79
+    classDef service   fill:#2E75B6,color:#fff,stroke:#2E75B6
+    classDef note      fill:#f9f9f9,color:#555,stroke:#ccc,stroke-dasharray:4
+
+    class CHECK,FRESH,ERR decision
+    class FIRESTORE firebase
+    class FMP external
+    class BUILD_URL,FETCH,PARSE,READ_CACHE,WRITE_CACHE service
+    class NOTE1 note

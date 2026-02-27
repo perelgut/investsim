@@ -1,0 +1,79 @@
+---
+title: CFD-03 — Trade Screen Control Flow (Buy and Sell)
+---
+flowchart TD
+    %% ── Entry ───────────────────────────────────────────────
+    ENTRY(["Student navigates\nto /trade"])
+    SEARCH["Student types symbol\nor company name"]
+    RESULTS{"Results\nreturned?"}
+    NO_RESULTS["Display:\nNo instruments found.\nTry a different search term."]
+    SELECT["Student selects\ninstrument from results"]
+    FETCH_QUOTE["market-data-service.js\nfetches delayed quote\nvia cache-service.js"]
+    QUOTE_ERR{"Quote\nfetch error?"}
+    QUOTE_ERR_MSG["Display plain-language\nerror with retry option"]
+    SHOW_QUOTE["Display instrument detail:\nname, symbol, class,\ncurrent price (delayed),\ndelay notice"]
+
+    %% ── Action Choice ───────────────────────────────────────
+    ACTION{"Student chooses\naction"}
+
+    %% ── Buy Path ────────────────────────────────────────────
+    BUY_FORM["Display Buy form:\nunits input, estimated cost,\navailable capital remaining"]
+    BUY_VAL{"units > 0 AND\ncost <= available\ncapital?"}
+    BUY_VAL_ERR["Display inline error:\nInsufficient funds or\ninvalid unit count"]
+    BUY_CONFIRM["Display confirmation modal:\nasset, units, price/unit,\ntotal cost, capital remaining after"]
+    BUY_CONFIRMED{"Student\nconfirms?"}
+    BUY_CANCEL["Close modal\nReturn to trade form"]
+    BUY_EXEC["portfolio-service.js\nexecutes buy transaction"]
+    BUY_SUCCESS(["Show success message\nRedirect to /dashboard"])
+
+    %% ── Sell Path ───────────────────────────────────────────
+    SELL_LIST["Display student's open\npositions for this instrument"]
+    NO_POSITIONS["Display:\nYou have no open positions\nfor this instrument."]
+    SELL_FORM["Display Sell form:\nunits to sell (max = units held),\nestimated proceeds"]
+    SELL_VAL{"0 < units to sell\n<= units held?"}
+    SELL_VAL_ERR["Display inline error:\nInvalid unit count"]
+    SELL_CONFIRM["Display confirmation modal:\nasset, units, price/unit,\ntotal proceeds, new capital balance"]
+    SELL_CONFIRMED{"Student\nconfirms?"}
+    SELL_CANCEL["Close modal\nReturn to sell form"]
+    SELL_EXEC["portfolio-service.js\nexecutes sell transaction"]
+    SELL_SUCCESS(["Show success message\nRedirect to /dashboard"])
+
+    %% ── Flow ────────────────────────────────────────────────
+    ENTRY --> SEARCH --> RESULTS
+    RESULTS -->|"No"| NO_RESULTS --> SEARCH
+    RESULTS -->|"Yes"| SELECT --> FETCH_QUOTE
+    FETCH_QUOTE --> QUOTE_ERR
+    QUOTE_ERR -->|"Yes"| QUOTE_ERR_MSG --> SEARCH
+    QUOTE_ERR -->|"No"| SHOW_QUOTE --> ACTION
+
+    ACTION -->|"Buy"| BUY_FORM
+    BUY_FORM --> BUY_VAL
+    BUY_VAL -->|"Fails"| BUY_VAL_ERR --> BUY_FORM
+    BUY_VAL -->|"Passes"| BUY_CONFIRM
+    BUY_CONFIRM --> BUY_CONFIRMED
+    BUY_CONFIRMED -->|"Cancel"| BUY_CANCEL --> BUY_FORM
+    BUY_CONFIRMED -->|"Confirm"| BUY_EXEC --> BUY_SUCCESS
+
+    ACTION -->|"Sell"| SELL_LIST
+    SELL_LIST -->|"No positions"| NO_POSITIONS
+    SELL_LIST -->|"Positions found"| SELL_FORM
+    SELL_FORM --> SELL_VAL
+    SELL_VAL -->|"Fails"| SELL_VAL_ERR --> SELL_FORM
+    SELL_VAL -->|"Passes"| SELL_CONFIRM
+    SELL_CONFIRM --> SELL_CONFIRMED
+    SELL_CONFIRMED -->|"Cancel"| SELL_CANCEL --> SELL_FORM
+    SELL_CONFIRMED -->|"Confirm"| SELL_EXEC --> SELL_SUCCESS
+
+    %% ── Styles ──────────────────────────────────────────────
+    classDef decision  fill:#FFF2CC,color:#000,stroke:#F0A500
+    classDef action    fill:#DEEAF1,color:#000,stroke:#2E75B6
+    classDef terminal  fill:#1F4E79,color:#fff,stroke:#1F4E79
+    classDef error     fill:#FCE4D6,color:#000,stroke:#c00
+    classDef success   fill:#E2EFDA,color:#000,stroke:#70AD47
+
+    class RESULTS,QUOTE_ERR,ACTION,BUY_VAL,BUY_CONFIRMED,SELL_VAL,SELL_CONFIRMED decision
+    class SEARCH,SELECT,FETCH_QUOTE,SHOW_QUOTE,BUY_FORM,BUY_CONFIRM,BUY_EXEC,SELL_LIST,SELL_FORM,SELL_CONFIRM,SELL_EXEC action
+    class ENTRY terminal
+    class NO_RESULTS,QUOTE_ERR_MSG,BUY_VAL_ERR,SELL_VAL_ERR,NO_POSITIONS error
+    class BUY_SUCCESS,SELL_SUCCESS success
+    class BUY_CANCEL,SELL_CANCEL action
