@@ -1,0 +1,18 @@
+// =============================================================
+// firestore.rules
+// Firestore Security Rules for InvestSim
+// TEMPORARY: Deny all access until proper rules are written
+// in tasks 1.7, 3.6, and 4.6.
+// =============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Deny all reads and writes until security rules are implemented.
+    // This will be replaced task by task starting at WBS 1.7.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

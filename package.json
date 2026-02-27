@@ -10,7 +10,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint js/**/*.js",
-    "lint:fix": "eslint js/**/*.js --fix"
+    "lint:fix": "eslint js/**/*.js --fix",
+    "emulate": "firebase emulators:start"
   },
   "repository": {
     "type": "git",
