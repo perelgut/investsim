@@ -1,0 +1,83 @@
+---
+title: DFD-01 — System Overview Data Flow
+---
+flowchart TD
+    %% ── External Entities ──────────────────────────────────
+    USER_S["👤 Student"]
+    USER_A["👤 Administrator"]
+    USER_O["👤 Owner"]
+    FMP["🌐 Financial Modeling Prep API\n(Delayed TSX Data)"]
+
+    %% ── System Boundary ────────────────────────────────────
+    subgraph APP ["Investment Simulation Application (GitHub Pages — Static)"]
+
+        subgraph AUTH_LAYER ["Authentication Layer"]
+            AUTH["auth-service.js\n(Firebase Auth)"]
+        end
+
+        subgraph DATA_LAYER ["Data Access Layer"]
+            MKT["market-data-service.js"]
+            PORT["portfolio-service.js"]
+            CACHE["cache-service.js"]
+        end
+
+        subgraph VIEW_LAYER ["View Layer"]
+            DASH["dashboard-view.js"]
+            TRADE["trade-view.js"]
+            ADMIN["admin-view.js"]
+            OWNER_V["owner-view.js"]
+            AUTH_V["auth-view.js"]
+        end
+
+        ROUTER["router.js\n(Client-Side Routing)"]
+    end
+
+    %% ── Firebase Backend ───────────────────────────────────
+    subgraph FIREBASE ["Firebase Backend (BaaS)"]
+        FB_AUTH["Firebase Authentication\n(Users + Role Claims)"]
+        FIRESTORE["Cloud Firestore\n(users / portfolios /\ntransactions / positions /\npriceCache)"]
+    end
+
+    %% ── Data Flows ─────────────────────────────────────────
+    USER_S -->|"credentials / actions"| AUTH_V
+    USER_A -->|"view requests"| ADMIN
+    USER_O -->|"role assignments"| OWNER_V
+
+    AUTH_V -->|"register / login"| AUTH
+    AUTH -->|"token + role claim"| FB_AUTH
+    FB_AUTH -->|"auth state"| ROUTER
+
+    ROUTER -->|"route to view"| DASH
+    ROUTER -->|"route to view"| TRADE
+    ROUTER -->|"route to view"| ADMIN
+    ROUTER -->|"route to view"| OWNER_V
+
+    DASH -->|"read portfolio"| PORT
+    TRADE -->|"buy / sell"| PORT
+    TRADE -->|"price lookup"| MKT
+
+    PORT -->|"read / write\npositions + transactions"| FIRESTORE
+    MKT -->|"check cache"| CACHE
+    CACHE -->|"read / write\npriceCache"| FIRESTORE
+    CACHE -->|"cache miss —\nfetch price"| FMP
+    FMP -->|"delayed price data"| CACHE
+
+    ADMIN -->|"read all student data"| PORT
+    OWNER_V -->|"read / write user roles"| FIRESTORE
+
+    FIRESTORE -->|"portfolio data"| PORT
+    PORT -->|"positions + balances"| DASH
+    PORT -->|"positions + balances"| ADMIN
+
+    %% ── Styles ─────────────────────────────────────────────
+    classDef external  fill:#1F4E79,color:#fff,stroke:#1F4E79
+    classDef firebase  fill:#F5A623,color:#000,stroke:#F5A623
+    classDef service   fill:#2E75B6,color:#fff,stroke:#2E75B6
+    classDef view      fill:#DEEAF1,color:#000,stroke:#2E75B6
+    classDef router    fill:#4CAF50,color:#fff,stroke:#4CAF50
+
+    class USER_S,USER_A,USER_O,FMP external
+    class FB_AUTH,FIRESTORE firebase
+    class AUTH,MKT,PORT,CACHE service
+    class DASH,TRADE,ADMIN,OWNER_V,AUTH_V view
+    class ROUTER router

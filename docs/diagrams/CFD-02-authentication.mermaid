@@ -1,0 +1,76 @@
+---
+title: CFD-02 — Authentication Control Flow (Register, Login, Logout)
+---
+flowchart TD
+    %% ── Registration ────────────────────────────────────────
+    subgraph REG ["Self-Registration Flow"]
+        R_START(["Student opens\n/register"])
+        R_INPUT["Student enters:\ndisplayName, email,\npassword, confirmPassword"]
+        R_VAL{"Client-side\nvalidation passes?"}
+        R_VAL_ERR["Display inline\nvalidation errors"]
+        R_FB["auth-service.js calls\nFirebase createUserWithEmailAndPassword"]
+        R_FB_ERR{"Firebase\nerror?"}
+        R_FB_MSG["Display plain-language\nerror message"]
+        R_CLAIM["Set role claim:\nrole = student\n(via Firestore users doc write)"]
+        R_PORT["portfolio-service.js:\ninitialise portfolio doc\ncapitalBalance = $10,000"]
+        R_DONE(["Redirect to\n/dashboard"])
+    end
+
+    %% ── Login ───────────────────────────────────────────────
+    subgraph LOGIN ["Login Flow"]
+        L_START(["User opens\n/login"])
+        L_INPUT["User enters\nemail + password"]
+        L_VAL{"Client-side\nvalidation passes?"}
+        L_VAL_ERR["Display inline\nvalidation errors"]
+        L_FB["auth-service.js calls\nFirebase signInWithEmailAndPassword"]
+        L_FB_ERR{"Firebase\nerror?"}
+        L_FB_MSG["Display plain-language\nerror message"]
+        L_CLAIM["Retrieve role claim\nfrom ID token"]
+        L_ROLE{"Role?"}
+        L_STU(["Redirect to /dashboard"])
+        L_ADM(["Redirect to /admin"])
+        L_OWN(["Redirect to /owner"])
+    end
+
+    %% ── Logout ──────────────────────────────────────────────
+    subgraph LOGOUT ["Logout Flow"]
+        LO_START(["User clicks\nLogout"])
+        LO_FB["auth-service.js calls\nFirebase signOut"]
+        LO_CLEAR["Clear local\napplication state"]
+        LO_DONE(["Redirect to /login"])
+    end
+
+    %% ── Registration Flow ───────────────────────────────────
+    R_START --> R_INPUT --> R_VAL
+    R_VAL -->|"Fails"| R_VAL_ERR --> R_INPUT
+    R_VAL -->|"Passes"| R_FB
+    R_FB --> R_FB_ERR
+    R_FB_ERR -->|"Yes"| R_FB_MSG --> R_INPUT
+    R_FB_ERR -->|"No"| R_CLAIM --> R_PORT --> R_DONE
+
+    %% ── Login Flow ──────────────────────────────────────────
+    L_START --> L_INPUT --> L_VAL
+    L_VAL -->|"Fails"| L_VAL_ERR --> L_INPUT
+    L_VAL -->|"Passes"| L_FB
+    L_FB --> L_FB_ERR
+    L_FB_ERR -->|"Yes"| L_FB_MSG --> L_INPUT
+    L_FB_ERR -->|"No"| L_CLAIM --> L_ROLE
+    L_ROLE -->|"student"| L_STU
+    L_ROLE -->|"administrator"| L_ADM
+    L_ROLE -->|"owner"| L_OWN
+
+    %% ── Logout Flow ─────────────────────────────────────────
+    LO_START --> LO_FB --> LO_CLEAR --> LO_DONE
+
+    %% ── Styles ──────────────────────────────────────────────
+    classDef decision  fill:#FFF2CC,color:#000,stroke:#F0A500
+    classDef action    fill:#DEEAF1,color:#000,stroke:#2E75B6
+    classDef terminal  fill:#1F4E79,color:#fff,stroke:#1F4E79
+    classDef error     fill:#FCE4D6,color:#000,stroke:#c00
+    classDef success   fill:#E2EFDA,color:#000,stroke:#70AD47
+
+    class R_VAL,R_FB_ERR,L_VAL,L_FB_ERR,L_ROLE decision
+    class R_INPUT,R_FB,R_CLAIM,R_PORT,L_INPUT,L_FB,L_CLAIM,LO_FB,LO_CLEAR action
+    class R_DONE,L_STU,L_ADM,L_OWN,LO_DONE success
+    class R_START,L_START,LO_START terminal
+    class R_VAL_ERR,R_FB_MSG,L_VAL_ERR,L_FB_MSG error
