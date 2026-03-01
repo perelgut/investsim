@@ -17,6 +17,101 @@
 
 import { auth } from '../firebase-config.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.x.x/firebase-auth.js';
+// Add this import at the top of auth-service.js alongside existing imports
+import { db } from '../firebase-config.js';
+import {
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from 'https://www.gstatic.com/firebasejs/10.x.x/firebase-auth.js';
+import {
+  doc,
+  setDoc,
+  serverTimestamp,
+} from 'https://www.gstatic.com/firebasejs/10.x.x/firebase-firestore.js';
+
+// ---------------------------------------------------------------------------
+// Registration
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a new student account in Firebase Authentication, writes the
+ * corresponding users document to Firestore with role: 'student', and
+ * triggers portfolio initialisation.
+ *
+ * @param {string} email       - The student's email address.
+ * @param {string} password    - The student's chosen password (min 8 chars).
+ * @param {string} displayName - The student's display name (max 50 chars).
+ * @returns {Promise<{user: import('firebase/auth').User|null, error: string|null}>}
+ *   Resolves with the created User object on success, or a plain-language
+ *   error message on failure.
+ *
+ * @example
+ *   const { user, error } = await registerUser('student@example.com', 'password123', 'Jane Smith');
+ *   if (error) {
+ *     showInlineError(error);
+ *   } else {
+ *     router.navigate('/dashboard');
+ *   }
+ */
+const registerUser = async (email, password, displayName) => {
+  try {
+    // Step 1: Create the Firebase Auth account
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // Step 2: Set the display name on the Auth profile
+    await updateProfile(user, { displayName });
+
+    // Step 3: Write the users/{uid} Firestore document
+    await setDoc(doc(db, 'users', user.uid), {
+      uid: user.uid,
+      email: email,
+      displayName: displayName,
+      role: 'student',
+      createdAt: serverTimestamp(),
+    });
+
+    // Step 4: Trigger portfolio initialisation
+    // Full implementation in Task 1.6 (portfolio-service.js)
+    // Stub: initPortfolio will be wired here once available
+    // await initPortfolio(user.uid);
+
+    return { user, error: null };
+  } catch (error) {
+    return { user: null, error: mapAuthError(error.code) };
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Auth Error Mapping
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps Firebase Authentication error codes to plain-language messages
+ * suitable for display to students with no technical background.
+ *
+ * @param {string} code - Firebase error code (e.g. 'auth/email-already-in-use').
+ * @returns {string} A plain-language error message.
+ */
+const mapAuthError = (code) => {
+  const errors = {
+    'auth/email-already-in-use':
+      'An account with this email address already exists. Try logging in instead.',
+    'auth/invalid-email': 'Please enter a valid email address.',
+    'auth/weak-password': 'Your password must be at least 8 characters long.',
+    'auth/user-not-found': 'No account found with this email address.',
+    'auth/wrong-password': 'Incorrect password. Please try again.',
+    'auth/too-many-requests': 'Too many failed attempts. Please wait a few minutes and try again.',
+    'auth/network-request-failed':
+      'A network error occurred. Please check your connection and try again.',
+  };
+
+  return errors[code] ?? 'Something went wrong. Please try again.';
+};
+
+// Add registerUser to exports
+export { getAuthState, getCurrentUserRole, registerUser };
 
 // ---------------------------------------------------------------------------
 // Auth State Listener
