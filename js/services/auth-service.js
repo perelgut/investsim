@@ -16,19 +16,19 @@
 'use strict';
 
 import { auth } from '../firebase-config.js';
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.x.x/firebase-auth.js';
+// import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.x.x/firebase-auth.js';
 // Add this import at the top of auth-service.js alongside existing imports
 import { db } from '../firebase-config.js';
 import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   updateProfile,
-} from 'https://www.gstatic.com/firebasejs/10.x.x/firebase-auth.js';
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
   doc,
   setDoc,
   serverTimestamp,
-} from 'https://www.gstatic.com/firebasejs/10.x.x/firebase-firestore.js';
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // ---------------------------------------------------------------------------
 // Registration
@@ -193,9 +193,3 @@ const getCurrentUserRole = async () => {
     return null;
   }
 };
-
-// ---------------------------------------------------------------------------
-// Exports
-// ---------------------------------------------------------------------------
-
-export { getAuthState, getCurrentUserRole };

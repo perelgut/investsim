@@ -14,7 +14,11 @@
 'use strict';
 
 import { registerUser } from '../services/auth-service.js';
-import { navigate } from '../router.js';
+// import { navigate } from '../router.js';
+// The following is a temporary workaround until the router is implemented in Task 2.1:
+const navigate = (path) => {
+  window.location.hash = path;
+};
 
 // ---------------------------------------------------------------------------
 // Validators stub
