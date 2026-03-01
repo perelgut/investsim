@@ -23,6 +23,7 @@ import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   updateProfile,
+  signInWithEmailAndPassword,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
   doc,
@@ -113,9 +114,6 @@ const mapAuthError = (code) => {
   return errors[code] ?? 'Something went wrong. Please try again.';
 };
 
-// Add registerUser to exports
-export { getAuthState, getCurrentUserRole, registerUser };
-
 // ---------------------------------------------------------------------------
 // Auth State Listener
 // ---------------------------------------------------------------------------
@@ -196,3 +194,43 @@ const getCurrentUserRole = async () => {
     return null;
   }
 };
+
+// ---------------------------------------------------------------------------
+// Login
+// ---------------------------------------------------------------------------
+
+/**
+ * Signs in an existing user with email and password. On success, retrieves
+ * the user's role custom claim and returns it alongside the user object so
+ * the caller can redirect to the appropriate default route.
+ *
+ * @param {string} email    - The user's email address.
+ * @param {string} password - The user's password.
+ * @returns {Promise<{user: import('firebase/auth').User|null, role: string|null, error: string|null}>}
+ *   Resolves with the user object and role string on success, or a
+ *   plain-language error message on failure.
+ *
+ * @example
+ *   const { user, role, error } = await loginUser('student@example.com', 'password123');
+ *   if (error) {
+ *     showInlineError(error);
+ *   } else if (role === 'student') {
+ *     router.navigate('/dashboard');
+ *   }
+ */
+const loginUser = async (email, password) => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // Retrieve role claim immediately after sign-in
+    const role = await getCurrentUserRole();
+
+    return { user, role, error: null };
+  } catch (error) {
+    return { user: null, role: null, error: mapAuthError(error.code) };
+  }
+};
+
+// Add loginUser to exports
+export { getAuthState, getCurrentUserRole, registerUser, loginUser };

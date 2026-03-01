@@ -13,7 +13,7 @@
 
 'use strict';
 
-import { registerUser } from '../services/auth-service.js';
+import { registerUser, loginUser } from '../services/auth-service.js';
 // import { navigate } from '../router.js';
 // The following is a temporary workaround until the router is implemented in Task 2.1:
 const navigate = (path) => {
@@ -224,7 +224,155 @@ const handleRegistrationSubmit = async (container) => {
 };
 
 // ---------------------------------------------------------------------------
+// Login Form
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates and returns the login form as a DOM element.
+ *
+ * Wires the submit handler to call loginUser from auth-service.js after
+ * client-side validation. Displays inline error messages on failure. On
+ * successful login, redirects to the default route for the user's role.
+ *
+ * @returns {HTMLElement} The assembled login form container element.
+ *
+ * @example
+ *   const view = renderLoginForm();
+ *   document.getElementById('app').replaceChildren(view);
+ */
+const renderLoginForm = () => {
+  const container = document.createElement('div');
+  container.className = 'auth-container';
+  container.id = 'login-form-container';
+
+  container.innerHTML = `
+    <div class="auth-card">
+      <h1 class="auth-title">Sign In</h1>
+      <p class="auth-subtitle">Welcome back to InvestSim.</p>
+
+      <div class="form-field">
+        <label for="login-email">Email Address</label>
+        <input
+          type="email"
+          id="login-email"
+          name="email"
+          autocomplete="email"
+          placeholder="you@example.com"
+          title="Enter the email address you registered with"
+        />
+        <span class="field-error" id="login-email-error" aria-live="polite"></span>
+      </div>
+
+      <div class="form-field">
+        <label for="login-password">Password</label>
+        <input
+          type="password"
+          id="login-password"
+          name="password"
+          autocomplete="current-password"
+          placeholder="Your password"
+          title="Enter your password"
+        />
+        <span class="field-error" id="login-password-error" aria-live="polite"></span>
+      </div>
+
+      <span class="field-error form-error" id="login-form-error" aria-live="polite"></span>
+
+      <button
+        type="button"
+        id="login-submit-btn"
+        class="btn btn-primary"
+        title="Sign in to your InvestSim account"
+      >
+        Sign In
+      </button>
+
+      <p class="auth-switch">
+        Don't have an account?
+        <a href="/#/register" title="Create a new InvestSim account">Create one</a>
+      </p>
+    </div>
+  `;
+
+  container
+    .querySelector('#login-submit-btn')
+    .addEventListener('click', () => handleLoginSubmit(container));
+
+  return container;
+};
+
+// ---------------------------------------------------------------------------
+// Login Submit Handler
+// ---------------------------------------------------------------------------
+
+/**
+ * Handles the login form submission. Runs client-side validation, calls
+ * loginUser, and redirects to the correct default route based on the
+ * returned role.
+ *
+ * Role routing:
+ *   student       → /#/dashboard
+ *   administrator → /#/admin
+ *   owner         → /#/owner
+ *
+ * @param {HTMLElement} container - The login form container element.
+ * @returns {Promise<void>}
+ */
+const handleLoginSubmit = async (container) => {
+  // Clear all previous error messages
+  container.querySelectorAll('.field-error').forEach((el) => {
+    el.textContent = '';
+  });
+
+  const email = container.querySelector('#login-email').value.trim();
+  const password = container.querySelector('#login-password').value;
+  const submitBtn = container.querySelector('#login-submit-btn');
+
+  // Client-side validation
+  // TODO: Replace stubs with validators.js functions in Task 5.9
+  let hasError = false;
+
+  const emailCheck = stubRequired(email, 'Email address');
+  if (!emailCheck.valid) {
+    container.querySelector('#login-email-error').textContent = emailCheck.message;
+    hasError = true;
+  }
+
+  const passwordCheck = stubRequired(password, 'Password');
+  if (!passwordCheck.valid) {
+    container.querySelector('#login-password-error').textContent = passwordCheck.message;
+    hasError = true;
+  }
+
+  if (hasError) return;
+
+  // Disable button and show loading state
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Signing in…';
+
+  // Call auth-service
+  const { user, role, error } = await loginUser(email, password);
+
+  if (error) {
+    container.querySelector('#login-form-error').textContent = error;
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Sign In';
+    return;
+  }
+
+  // Redirect based on role
+  const roleRoutes = {
+    student: '/dashboard',
+    administrator: '/admin',
+    owner: '/owner',
+  };
+
+  const destination = roleRoutes[role] ?? '/dashboard';
+  navigate(destination);
+};
+
+// ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
 
-export { renderRegistrationForm };
+export { renderRegistrationForm, renderLoginForm };

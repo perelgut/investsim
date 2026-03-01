@@ -9,9 +9,14 @@
 
 'use strict';
 
-import { renderRegistrationForm } from './views/auth-view.js';
+import { renderLoginForm } from './views/auth-view.js';
 
 // Temporary: render the registration form directly into #app
 // This will be replaced by the router in Task 2.1
 const app = document.getElementById('app');
+app.replaceChildren(renderLoginForm());
+
+/** import { renderRegistrationForm } from './views/auth-view.js';
+const app = document.getElementById('app');
 app.replaceChildren(renderRegistrationForm());
+**/
