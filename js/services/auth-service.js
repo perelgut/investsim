@@ -64,6 +64,9 @@ const registerUser = async (email, password, displayName) => {
     await updateProfile(user, { displayName });
 
     // Step 3: Write the users/{uid} Firestore document
+    console.log('[debug] attempting setDoc for uid:', user.uid);
+    console.log('[debug] db instance:', db);
+
     await setDoc(doc(db, 'users', user.uid), {
       uid: user.uid,
       email: email,

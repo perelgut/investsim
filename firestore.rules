@@ -12,7 +12,7 @@ service cloud.firestore {
     // Deny all reads and writes until security rules are implemented.
     // This will be replaced task by task starting at WBS 1.7.
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if true;
     }
   }
 }
