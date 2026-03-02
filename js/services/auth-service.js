@@ -24,6 +24,7 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   signInWithEmailAndPassword,
+  signOut,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
   doc,
@@ -232,5 +233,51 @@ const loginUser = async (email, password) => {
   }
 };
 
-// Add loginUser to exports
-export { getAuthState, getCurrentUserRole, registerUser, loginUser };
+// ---------------------------------------------------------------------------
+// Application State Cache
+// ---------------------------------------------------------------------------
+
+/**
+ * Clears any locally cached application state on logout.
+ * This is a stub — expanded in later phases as state management grows.
+ *
+ * @returns {void}
+ */
+const clearAppState = () => {
+  // TODO: clear any cached portfolio data, user preferences, etc.
+  // as state management is added in Phases 3-5
+  console.info('[auth-service] clearAppState: application state cleared.');
+};
+
+// ---------------------------------------------------------------------------
+// Logout
+// ---------------------------------------------------------------------------
+
+/**
+ * Signs out the current user from Firebase Authentication, clears all
+ * locally cached application state, and returns a success/error result
+ * for the caller to handle navigation.
+ *
+ * @returns {Promise<{success: boolean, error: string|null}>}
+ *   Resolves with { success: true, error: null } on success, or
+ *   { success: false, error } if the sign-out call fails.
+ *
+ * @example
+ *   const { success, error } = await logoutUser();
+ *   if (success) {
+ *     navigate('/login');
+ *   }
+ */
+const logoutUser = async () => {
+  try {
+    await signOut(auth);
+    clearAppState();
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('[auth-service] logoutUser failed:', error.message);
+    return { success: false, error: mapAuthError(error.code) };
+  }
+};
+
+// Update exports
+export { getAuthState, getCurrentUserRole, registerUser, loginUser, logoutUser };

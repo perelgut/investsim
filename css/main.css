@@ -127,3 +127,53 @@ body {
 .auth-switch a:hover {
   text-decoration: underline;
 }
+
+/* Nav Bar — stub styles for Phase 1 testing */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 52px;
+  background: #0066cc;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 100;
+}
+
+.nav-brand {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-display-name {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.btn-logout {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+.btn-logout:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+body {
+  padding-top: 52px;
+}

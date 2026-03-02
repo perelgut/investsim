@@ -10,13 +10,26 @@
 'use strict';
 
 import { renderLoginForm } from './views/auth-view.js';
+import { renderNavBar } from './components/nav-bar.js';
+import { getAuthState } from './services/auth-service.js';
 
-// Temporary: render the registration form directly into #app
-// This will be replaced by the router in Task 2.1
 const app = document.getElementById('app');
-app.replaceChildren(renderLoginForm());
 
-/** import { renderRegistrationForm } from './views/auth-view.js';
-const app = document.getElementById('app');
-app.replaceChildren(renderRegistrationForm());
-**/
+// Show nav bar when user is signed in, login form when signed out
+getAuthState((user) => {
+  if (user) {
+    // Remove existing nav if present
+    const existingNav = document.getElementById('nav-bar');
+    if (existingNav) existingNav.remove();
+
+    // Prepend nav bar to body
+    document.body.prepend(renderNavBar(user));
+    app.innerHTML = `<p style="padding:32px">Signed in as <strong>${user.displayName}</strong>. Use the Logout button above.</p>`;
+  } else {
+    // Remove nav bar if present
+    const existingNav = document.getElementById('nav-bar');
+    if (existingNav) existingNav.remove();
+
+    app.replaceChildren(renderLoginForm());
+  }
+});
