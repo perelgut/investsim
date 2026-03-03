@@ -32,6 +32,7 @@ import {
   serverTimestamp,
   getDoc,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { initPortfolio } from './portfolio-service.js';
 
 // ---------------------------------------------------------------------------
 // Registration
@@ -79,9 +80,16 @@ const registerUser = async (email, password, displayName) => {
     });
 
     // Step 4: Trigger portfolio initialisation
-    // Full implementation in Task 1.6 (portfolio-service.js)
-    // Stub: initPortfolio will be wired here once available
-    // await initPortfolio(user.uid);
+    const { success: portfolioCreated, error: portfolioError } = await initPortfolio(user.uid);
+    if (!portfolioCreated) {
+      console.error(
+        '[auth-service] registerUser: portfolio initialisation failed for user',
+        user.uid,
+        portfolioError
+      );
+      // Registration succeeded — do not block the user from proceeding.
+      // Portfolio can be re-initialised on next login if needed.
+    }
 
     return { user, error: null };
   } catch (error) {
