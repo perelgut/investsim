@@ -3,7 +3,7 @@
  * @description Application entry point — minimal bootstrap for Phase 1 testing.
  *              Full implementation in Task 2.3 when routing is wired up.
  *
- * @author Development Team
+ * @author Stephen Perelgut and Claude.ai
  * @date March 2026
  */
 

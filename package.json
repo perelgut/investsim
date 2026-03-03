@@ -8,10 +8,11 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint js/**/*.js",
     "lint:fix": "eslint js/**/*.js --fix",
-    "emulate": "firebase emulators:start --export-on-exit ./emulator-data --import ./emulator-data"
+    "emulate": "firebase emulators:start --export-on-exit ./emulator-data --import ./emulator-data",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "repository": {
     "type": "git",
@@ -27,9 +28,12 @@
   "homepage": "https://github.com/perelgut/investsim#readme",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@firebase/rules-unit-testing": "^5.0.0",
     "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsdoc": "^62.7.1",
-    "prettier": "^3.8.1"
+    "firebase-admin": "^13.7.0",
+    "prettier": "^3.8.1",
+    "vitest": "^4.0.18"
   }
 }
