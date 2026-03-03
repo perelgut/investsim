@@ -9,8 +9,8 @@
 
 'use strict';
 
-import { renderLoginForm } from './views/auth-view.js';
-// import { renderRegistrationForm } from './views/auth-view.js';
+// import { renderLoginForm } from './views/auth-view.js';
+import { renderRegistrationForm } from './views/auth-view.js';
 import { renderNavBar } from './components/nav-bar.js';
 import { getAuthState } from './services/auth-service.js';
 
@@ -31,7 +31,7 @@ getAuthState((user) => {
     const existingNav = document.getElementById('nav-bar');
     if (existingNav) existingNav.remove();
 
-    app.replaceChildren(renderLoginForm());
-    // app.replaceChildren(renderRegistrationForm());
+    // app.replaceChildren(renderLoginForm());
+    app.replaceChildren(renderRegistrationForm());
   }
 });

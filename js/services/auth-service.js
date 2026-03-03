@@ -68,8 +68,6 @@ const registerUser = async (email, password, displayName) => {
     await updateProfile(user, { displayName });
 
     // Step 3: Write the users/{uid} Firestore document
-    console.log('[debug] attempting setDoc for uid:', user.uid);
-    console.log('[debug] db instance:', db);
 
     await setDoc(doc(db, 'users', user.uid), {
       uid: user.uid,
@@ -207,7 +205,7 @@ const getCurrentUserRole = async () => {
       '— falling back to Firestore users document.'
     );
 
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userDocSnap = await getDoc(doc(db, 'users', user.uid));
     if (!userDocSnap.exists()) {
       console.warn('[auth-service] getCurrentUserRole: no users document found for user', user.uid);
       return null;
