@@ -30,6 +30,7 @@ import {
   doc,
   setDoc,
   serverTimestamp,
+  getDoc,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // ---------------------------------------------------------------------------
@@ -157,6 +158,12 @@ const getAuthState = (callback) => {
  * claims are returned rather than a cached token. This is important after a
  * role change, which only takes effect once the token is refreshed.
  *
+ * If no role claim is present on the token — which occurs for student accounts
+ * created via self-registration, since custom claims cannot be set client-side
+ * — the function falls back to reading the role from the Firestore users
+ * document. This fallback ensures newly registered students can log in
+ * immediately without requiring a server-side claim update.
+ *
  * @returns {Promise<string|null>} Resolves with the role string —
  *   'student', 'administrator', or 'owner' — or null if no user is
  *   signed in or no role claim is present on the token.
@@ -175,23 +182,42 @@ const getCurrentUserRole = async () => {
   }
 
   try {
+    // Attempt 1: read role from ID token custom claim (force refresh)
     const idTokenResult = await user.getIdTokenResult(true);
-    const role = idTokenResult.claims.role;
+    const claimRole = idTokenResult.claims.role;
 
-    if (!role) {
+    if (claimRole) {
+      return claimRole;
+    }
+
+    // Attempt 2: fallback to Firestore users document
+    // Occurs for self-registered students whose claim has not yet been
+    // set server-side via the Admin SDK.
+    console.warn(
+      '[auth-service] getCurrentUserRole: no role claim on token for user',
+      user.uid,
+      '— falling back to Firestore users document.'
+    );
+
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (!userDocSnap.exists()) {
+      console.warn('[auth-service] getCurrentUserRole: no users document found for user', user.uid);
+      return null;
+    }
+
+    const firestoreRole = userDocSnap.data().role;
+
+    if (!firestoreRole) {
       console.warn(
-        '[auth-service] getCurrentUserRole: no role claim found on token for user',
+        '[auth-service] getCurrentUserRole: users document exists but has no role field for user',
         user.uid
       );
       return null;
     }
 
-    return role;
+    return firestoreRole;
   } catch (error) {
-    console.error(
-      '[auth-service] getCurrentUserRole: failed to retrieve ID token result.',
-      error.message
-    );
+    console.error('[auth-service] getCurrentUserRole: failed to retrieve role.', error.message);
     return null;
   }
 };
