@@ -1,16 +1,113 @@
+rules_version = '2';
+
 // =============================================================
-// firestore.rules
-// Firestore Security Rules for InvestSim
-// TEMPORARY: Deny all access until proper rules are written
-// in tasks 1.7, 3.6, and 4.6.
+// InvestSim — Firestore Security Rules
+// Version: Phase 1 (users collection only)
+//
+// IMPORTANT: These rules are the authoritative security boundary.
+// Client-side role checks control UI visibility only and must
+// never be relied upon as a security control.
+//
+// Role model:
+//   owner         — developer-provisioned account; full access
+//   administrator — assigned by owner; read-only access to all data
+//   student       — self-registered; read/write own data only
+//
+// Rules are expanded in each phase:
+//   Phase 1 (Task 1.7) — users collection
+//   Phase 3 (Task 3.6) — priceCache collection
+//   Phase 4 (Task 4.6) — portfolios, positions, transactions collections
 // =============================================================
 
-rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Deny all reads and writes until security rules are implemented.
-    // This will be replaced task by task starting at WBS 1.7.
+    // ── Helper Functions ──────────────────────────────────────────────────
+
+    /**
+     * Returns true if the request comes from an authenticated user.
+     */
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    /**
+     * Returns true if the authenticated user has the owner role claim.
+     */
+    function isOwner() {
+      return isAuthenticated() && request.auth.token.role == 'owner';
+    }
+
+    /**
+     * Returns true if the authenticated user has the administrator role claim.
+     */
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'administrator';
+    }
+
+    /**
+     * Returns true if the authenticated user has the student role claim.
+     */
+    function isStudent() {
+      return isAuthenticated() && request.auth.token.role == 'student';
+    }
+
+    /**
+     * Returns true if the authenticated user is either owner or administrator.
+     */
+    function isOwnerOrAdmin() {
+      return isOwner() || isAdmin();
+    }
+
+    /**
+     * Returns true if the authenticated user is accessing their own document.
+     * @param {string} userId - The document ID to compare against the auth UID.
+     */
+    function isOwnDocument(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ── users collection ─────────────────────────────────────────────────
+    //
+    // Security boundary:
+    //   Students may read only their own document.
+    //   Students may not write to the users collection at all —
+    //   user documents are written by auth-service.js on registration
+    //   and by the owner via setUserRole (Task 6.5).
+    //   Administrators may read all user documents but not write.
+    //   Owner may read and write all user documents.
+    //
+    // Note: the role field is never writable by students. Role changes
+    // are made exclusively by the owner through the owner view (Task 6.4).
+
+    match /users/{userId} {
+
+      // Students: read own document only
+      // Administrators: read any document
+      // Owner: read any document
+      allow read: if isOwnDocument(userId) || isOwnerOrAdmin();
+
+      // Owner only: update or delete any document
+      // This covers both create and update operations.
+      
+      allow update, delete: if isOwner();
+
+      // Students can create their own user document
+      allow create:        if isOwnDocument(userId);
+    }
+
+    // ── portfolios collection — temporary development rule ────────────────
+    // Full security rules implemented in Task 4.6.
+    // Allows authenticated users to read and write their own portfolio document.
+
+    match /portfolios/{userId} {
+      allow read, write: if isOwnDocument(userId);
+    }
+
+    // ── All other collections — deny by default ───────────────────────────
+    // Explicit rules for priceCache, portfolios, positions, and transactions
+    // are added in Tasks 3.6 and 4.6. Until then, all access is denied.
+
     match /{document=**} {
       allow read, write: if false;
     }
