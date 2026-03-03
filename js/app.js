@@ -13,8 +13,22 @@
 import { renderRegistrationForm } from './views/auth-view.js';
 import { renderNavBar } from './components/nav-bar.js';
 import { getAuthState } from './services/auth-service.js';
+import { addRoute, navigate, initRouter } from './router.js';
 
 const app = document.getElementById('app');
+
+// Register test routes
+addRoute('/login', () => {
+  app.innerHTML = '<p style="padding:32px">Route: <strong>/login</strong></p>';
+});
+addRoute('/dashboard', () => {
+  app.innerHTML = '<p style="padding:32px">Route: <strong>/dashboard</strong></p>';
+});
+addRoute('/student/:uid', ({ uid }) => {
+  app.innerHTML = `<p style="padding:32px">Route: <strong>/student/${uid}</strong></p>`;
+});
+
+initRouter();
 
 // Show nav bar when user is signed in, login form when signed out
 getAuthState((user) => {
