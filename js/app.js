@@ -9,8 +9,8 @@
 
 'use strict';
 
-// import { renderLoginForm } from './views/auth-view.js';
-import { renderRegistrationForm } from './views/auth-view.js';
+import { renderLoginForm } from './views/auth-view.js';
+// import { renderRegistrationForm } from './views/auth-view.js';
 import { renderNavBar } from './components/nav-bar.js';
 import { getAuthState } from './services/auth-service.js';
 import { addRoute, navigate, initRouter } from './router.js';
@@ -18,6 +18,7 @@ import { addRoute, navigate, initRouter } from './router.js';
 const app = document.getElementById('app');
 
 // Register test routes
+/** OLD VERSIONS 
 addRoute('/login', () => {
   app.innerHTML = '<p style="padding:32px">Route: <strong>/login</strong></p>';
 });
@@ -27,11 +28,60 @@ addRoute('/dashboard', () => {
 addRoute('/student/:uid', ({ uid }) => {
   app.innerHTML = `<p style="padding:32px">Route: <strong>/student/${uid}</strong></p>`;
 });
+**/
+addRoute(
+  '/login',
+  () => {
+    app.innerHTML = '<p style="padding:32px">Route: <strong>/login</strong></p>';
+  },
+  []
+);
+
+addRoute(
+  '/dashboard',
+  () => {
+    app.innerHTML = '<p style="padding:32px">Route: <strong>/dashboard</strong></p>';
+  },
+  ['student']
+);
+
+addRoute(
+  '/student/:uid',
+  ({ uid }) => {
+    app.innerHTML = `<p style="padding:32px">Route: <strong>/student/${uid}</strong></p>`;
+  },
+  ['administrator', 'owner']
+);
+
+addRoute(
+  '/admin',
+  () => {
+    app.innerHTML = '<p style="padding:32px">Route: <strong>/admin</strong></p>';
+  },
+  ['administrator', 'owner']
+);
+
+addRoute(
+  '/owner',
+  () => {
+    app.innerHTML = '<p style="padding:32px">Route: <strong>/owner</strong></p>';
+  },
+  ['owner']
+);
+
+addRoute(
+  '/register',
+  () => {
+    app.innerHTML = '<p style="padding:32px">Route: <strong>/register</strong></p>';
+  },
+  []
+);
 
 initRouter();
 
 // Show nav bar when user is signed in, login form when signed out
-getAuthState((user) => {
+
+/** getAuthState((user) => {
   if (user) {
     // Remove existing nav if present
     const existingNav = document.getElementById('nav-bar');
@@ -45,7 +95,8 @@ getAuthState((user) => {
     const existingNav = document.getElementById('nav-bar');
     if (existingNav) existingNav.remove();
 
-    // app.replaceChildren(renderLoginForm());
-    app.replaceChildren(renderRegistrationForm());
+    app.replaceChildren(renderLoginForm());
+    // app.replaceChildren(renderRegistrationForm());
   }
 });
+**/
